@@ -1,6 +1,5 @@
 package com.example.auth;
 
-//import javax.annotation.Resource;
 import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,20 +21,18 @@ import org.springframework.security.oauth2.config.annotation.web.configurers.Aut
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.JdbcTokenStore;
+import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 
 @Configuration
 @EnableAuthorizationServer
 public class AuthServerOAuth2Config extends AuthorizationServerConfigurerAdapter {
 
 	@Autowired
-	private Environment env;
-
-	@Autowired
 	@Qualifier("authenticationManagerBean")
 	private AuthenticationManager authenticationManager;
 
-	@Value("classpath:schema.sql")
-	private Resource schemaScript;
+	@Autowired
+	private Environment env;
 
 	@Override
 	public void configure(AuthorizationServerSecurityConfigurer oauthServer) throws Exception {
@@ -52,13 +49,25 @@ public class AuthServerOAuth2Config extends AuthorizationServerConfigurerAdapter
 	@Override
 	public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
 
-		endpoints.tokenStore(tokenStore()).authenticationManager(authenticationManager);
+		//endpoints.tokenStore(tokenStore()).authenticationManager(authenticationManager);
+		endpoints.tokenStore(tokenStore()).accessTokenConverter(accessTokenConverter())
+		.authenticationManager(authenticationManager);
 	}
 
 	@Bean
 	public TokenStore tokenStore() {
 		return new JdbcTokenStore(dataSource());
 	}
+	
+    @Bean
+    public JwtAccessTokenConverter accessTokenConverter() {
+        JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
+        converter.setSigningKey("123");
+        return converter;
+    }
+
+	@Value("classpath:schema.sql")
+	private Resource schemaScript;
 
 	@Bean
 	public DataSourceInitializer dataSourceInitializer(DataSource dataSource) {
